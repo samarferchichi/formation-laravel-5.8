@@ -31,5 +31,10 @@
         </select>
     </div>
     <br>
-    <button type="submit" class="btn btn-info"> Save customer</button>
+    <div class="form-group d-flex flex-column">
+        <label for="image"> Profile Image</label>
+        <input type="file" name="image" class="py-2">
+        {{ $errors->first('image')}}
+    </div>
+    <br>
     @csrf 

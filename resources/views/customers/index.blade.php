@@ -5,8 +5,12 @@
 @endsection
 
 @section('content')
+
 <h1>Customers List</h1>
-<a href="customers/create"> Add New Customer</a>
+
+@can('create', App\Customer::class)
+    <a href="customers/create"> Add New Customer</a>
+@endcan
 
 <hr>
     @foreach($customres as $customer)
@@ -22,4 +26,11 @@
 
         </div>
     @endforeach
+<br>
+<div class="row">
+    <div class="col-12 d-flex justify-content-center">
+        {{ $customres->links() }}
+    </div>
+</div>
+
 @endsection

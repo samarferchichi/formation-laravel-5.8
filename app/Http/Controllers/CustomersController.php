@@ -9,6 +9,7 @@ use App\Company;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\WelcomeNewUserMail;
 use App\Events\NewCustomerHasRegisteredEvent;
+use Intervention\Image\Facades\Image;
 
 class CustomersController extends Controller
 {
@@ -21,9 +22,11 @@ class CustomersController extends Controller
 
    public function index()
    {
-    $customres = Customer::all();
+
+    $customres = Customer::with('company')->paginate(20);
 
     return view('customers.index', compact('customres'));
+
    }
 
     public  function create()
@@ -36,26 +39,23 @@ class CustomersController extends Controller
 
    public function store()
    {
-       $data = request()->validate([
-           'name' => 'required|min:3',
-           'email' => 'required|email',
-           'active' => 'required',
-           'company_id' => 'required',
 
-       ]);
-
-        $customer =  Customer::create($this->validateRequest());
+        $this->authorize('create', Customer::class);
+        
+        $customer = Customer::create($this->validateRequest());
+        
+        $this->storeImage($customer);
 
         event(new NewCustomerHasRegisteredEvent($customer));
 
-     return redirect('customers');
+        return redirect('customers');
 
     }
 
     public function show($customer)
     {
         $customer = Customer::find($customer);
-       //dd($customer);  
+
         return view('customers.show',compact('customer'));
     }
 
@@ -72,6 +72,8 @@ class CustomersController extends Controller
            
         $customer->update($this->validateRequest());
 
+        $this->storeImage($customer);
+
         return redirect('customers/'. $customer->id);   
     }
 
@@ -87,15 +89,29 @@ class CustomersController extends Controller
 
     public function validateRequest()
     {
-        return  (
-            $data = request()->validate([
+        return request()->validate([
+
             'name' => 'required|min:3',
             'email' => 'required|email',
             'active' => 'required',
             'company_id' => 'required',
-            
-        ]));
+            'image' => 'sometimes|required|image|max:5000',
+
+        ]);
+
     }
 
+
+    private function storeImage($customer)
+    {
+        if(request()->has('image')){
+            $customer->update([
+                'image' => request()->image->store('uploads', 'public'),
+            ]);
+
+            $image = Image::make(public_path('storage/' . $customer->image))->fit(300, 300);
+            $image->save();
+        }
+    }
 
 }
